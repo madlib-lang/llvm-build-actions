@@ -76,14 +76,10 @@ jobs:
         shell: msys2 {0}
 
       - name: Zip LLVM build
-        run: 7z a llvm.zip "c:\Program Files\LLVM\*"
-
-      - name: Rename build asset
-        shell: msys2 {0}
-        run: mv llvm.zip llvm9-mingw64.zip
+        run: 7z a llvm9-mingw64.zip "c:\Program Files\LLVM\*"
 
       - name: Upload OSX target
-        uses: actions/upload-release-asset@v1.0.2
+        uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
