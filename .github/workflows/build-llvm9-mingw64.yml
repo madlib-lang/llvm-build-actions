@@ -1,4 +1,4 @@
-name: 'Release windows'
+name: 'Build LLVM - win64'
 
 on:
   workflow_dispatch:
