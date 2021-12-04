@@ -62,3 +62,32 @@ jobs:
           body: Release ${{ github.event.inputs.version }}
           draft: false
           prerelease: false
+
+
+     
+  #     - name: Upload Linux target
+  #       uses: actions/upload-release-asset@v1.0.2
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       with:
+  #         upload_url: ${{ steps.create_release.outputs.upload_url }}
+  #         asset_path: ./pkg/targets/madlib-linux.tar.gz
+  #         asset_name: madlib-linux.tar.gz
+  #         asset_content_type: application/tar+gzip
+
+  # publish:
+  #   needs: release
+  #   runs-on: ubuntu-latest
+  #   defaults:
+  #     run:
+  #       working-directory: ./pkg
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Use Node.js ${{ env.node-version }}
+  #       uses: actions/setup-node@v1
+  #       with:
+  #         node-version: ${{ env.node-version }}
+  #     - run: cp -R ../prelude ./
+  #     - run: npm install
+  #     - run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+  #     - run: npm publish --access public
