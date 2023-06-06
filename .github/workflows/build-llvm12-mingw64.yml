@@ -1,0 +1,88 @@
+name: 'Build LLVM - win64'
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release ( ex: v0.0.1 )'
+        required: true
+
+jobs:
+  build:
+    runs-on: windows-2019
+    steps:
+      - name: Checkout madlib
+        uses: actions/checkout@v2
+
+      - name: Clone LLVM
+        uses: actions/checkout@v2
+        with:
+          repository: llvm/llvm-project
+          path: './llvm-project'
+          fetch-depth: 0
+
+      - name: Checkout LLVM 12.0.1
+        run: |
+          cd llvm-project
+          git checkout tags/llvmorg-12.0.1
+
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          install: >-
+            git
+            mingw-w64-x86_64-curl
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-gcc-libs
+            mingw-w64-x86_64-libffi
+            mingw-w64-x86_64-libxml2
+            mingw-w64-x86_64-zlib
+            mingw-w64-x86_64-libc++
+            mingw-w64-x86_64-libc++abi
+            mingw-w64-x86_64-libunwind
+            groff
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-pkg-config
+            mingw-w64-x86_64-python
+            mingw-w64-x86_64-python-sphinx
+            mingw-w64-x86_64-z3
+            tar
+            base-devel
+            make
+            autoconf
+            libtool
+
+      - name: Build LLVM
+        run: |
+          # download ghc build 8.10.7 for win64
+          curl https://downloads.haskell.org/\~ghc/8.10.7/ghc-8.10.7-x86_64-unknown-mingw32.tar.xz --output ghc.tar.xz
+
+          # extract
+          tar -xvf ghc.tar.xz
+
+          MINGW_FROM_GHC_PATH="$(pwd)/ghc-8.10.7/mingw/bin"
+
+          export PATH="$MINGW_FROM_GHC_PATH:$PATH"
+
+          mkdir /c/llvm-build
+          cd llvm-project/llvm
+          cmake -S . -B /c/llvm-build -G "MSYS Makefiles" -DCMAKE_CXX_FLAGS="-static" -DLLVM_BUILD_BENCHMARKS="OFF" -DLLVM_INCLUDE_BENCHMARKS="OFF" -DLLVM_INCLUDE_EXAMPLES="OFF" -DLLVM_INCLUDE_TESTS="OFF" -DCXX_STANDARD_REQUIRED="ON" -DCXX_EXTENSIONS="OFF" -DCMAKE_INSTALL_PREFIX:PATH="/c/Program Files/LLVM" -DCMAKE_BUILD_TYPE="Release" -DLLVM_OPTIMIZED_TABLEGEN="ON" -DLLVM_TARGETS_TO_BUILD="X86"
+          cmake --build /c/llvm-build
+          cmake --build /c/llvm-build --target install
+        shell: msys2 {0}
+
+      - name: Zip LLVM build
+        run: 7z a llvm9-mingw64.zip "c:\Program Files\LLVM\*"
+
+      - name: Upload OSX target
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.event.inputs.version }}
+          files: llvm9-mingw64.zip
+
